@@ -47,7 +47,7 @@
   <div id="start-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);color:#fff;display:flex;align-items:center;justify-content:center;z-index:1000;font-size:2rem;cursor:pointer;user-select:none;">Click to Start</div>
   <script>
   const VIDEO_SRC = './Untitled_video_-_Made_with_Clipchamp_2(1).mp4';
-    const NUM_VIDEOS = 75; // Number of overlays
+    const NUM_VIDEOS = 8; // Number of overlays
     const container = document.getElementById('video-container');
     let videos = [];
 
@@ -133,7 +133,7 @@
       });
     }
 
-    function createVideo(withAudio = true) {
+    function createVideo(withAudio = false) {
       const vid = document.createElement('video');
       vid.src = VIDEO_SRC;
       vid.loop = true;
@@ -199,10 +199,9 @@
           // ignore
         }
       }
-      // Default to random pattern
-      randomPattern();
-      // Optionally, animate overlays every few seconds for chaos (only in random mode)
-      let patternMode = 'random';
+      // Default to grid pattern
+      gridPattern();
+      let patternMode = 'grid';
       let interval = setInterval(() => {
         if (patternMode === 'random') {
           videos.forEach(vid => {
