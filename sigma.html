@@ -37,6 +37,13 @@
 </head>
 <body>
   <div id="video-container"></div>
+  <div id="pattern-controls" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;gap:0.5rem;">
+    <button data-pattern="random">Random</button>
+    <button data-pattern="grid">Grid</button>
+    <button data-pattern="circle">Circle</button>
+    <button data-pattern="spiral">Spiral</button>
+    <button data-pattern="stack">Stack</button>
+  </div>
   <div id="start-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);color:#fff;display:flex;align-items:center;justify-content:center;z-index:1000;font-size:2rem;cursor:pointer;user-select:none;">Click to Start</div>
   <script>
   const VIDEO_SRC = './Untitled_video_-_Made_with_Clipchamp_2(1).mp4';
@@ -51,6 +58,79 @@
       const scale = 0.95 + Math.random() * 0.15;
       const rot = (Math.random() - 0.5) * 16; // -8deg to 8deg
       return `translate(${tx}vw, ${ty}vh) scale(${scale}) rotate(${rot}deg)`;
+    }
+
+    function gridPattern() {
+      const cols = Math.ceil(Math.sqrt(NUM_VIDEOS));
+      const rows = Math.ceil(NUM_VIDEOS / cols);
+      const w = window.innerWidth / cols;
+      const h = window.innerHeight / rows;
+      videos.forEach((vid, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = col * w;
+        const y = row * h;
+        vid.style.transform = `translate(${x}px, ${y}px) scale(1) rotate(0deg)`;
+        vid.style.width = w + 'px';
+        vid.style.height = h + 'px';
+        vid.dataset.x = x;
+        vid.dataset.y = y;
+      });
+    }
+
+    function circlePattern() {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const radius = Math.min(cx, cy) * 0.7;
+      videos.forEach((vid, i) => {
+        const angle = (2 * Math.PI * i) / NUM_VIDEOS;
+        const x = cx + radius * Math.cos(angle) - window.innerWidth / 2;
+        const y = cy + radius * Math.sin(angle) - window.innerHeight / 2;
+        vid.style.transform = `translate(${x}px, ${y}px) scale(0.7) rotate(${angle * 180 / Math.PI}deg)`;
+        vid.style.width = '100vw';
+        vid.style.height = '100vh';
+        vid.dataset.x = x;
+        vid.dataset.y = y;
+      });
+    }
+
+    function spiralPattern() {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const maxRadius = Math.min(cx, cy) * 0.8;
+      videos.forEach((vid, i) => {
+        const t = i / NUM_VIDEOS;
+        const angle = 4 * Math.PI * t;
+        const radius = maxRadius * t;
+        const x = cx + radius * Math.cos(angle) - window.innerWidth / 2;
+        const y = cy + radius * Math.sin(angle) - window.innerHeight / 2;
+        vid.style.transform = `translate(${x}px, ${y}px) scale(${0.5 + 0.5 * (1-t)}) rotate(${angle * 180 / Math.PI}deg)`;
+        vid.style.width = '100vw';
+        vid.style.height = '100vh';
+        vid.dataset.x = x;
+        vid.dataset.y = y;
+      });
+    }
+
+    function stackPattern() {
+      videos.forEach((vid, i) => {
+        const offset = i * 20;
+        vid.style.transform = `translate(${offset}px, ${offset}px) scale(0.9) rotate(${i*3}deg)`;
+        vid.style.width = '100vw';
+        vid.style.height = '100vh';
+        vid.dataset.x = offset;
+        vid.dataset.y = offset;
+      });
+    }
+
+    function randomPattern() {
+      videos.forEach((vid) => {
+        vid.style.transform = randomTransform();
+        vid.style.width = '100vw';
+        vid.style.height = '100vh';
+        vid.dataset.x = 0;
+        vid.dataset.y = 0;
+      });
     }
 
     function createVideo(withAudio = false) {
@@ -110,6 +190,7 @@
 
     document.getElementById('start-overlay').addEventListener('click', async function() {
       this.style.display = 'none';
+      document.getElementById('pattern-controls').style.display = 'flex';
       // Try to play all videos
       for (const vid of videos) {
         try {
@@ -118,17 +199,31 @@
           // ignore
         }
       }
-      // Optionally, animate overlays every few seconds for chaos
-      setInterval(() => {
-        videos.forEach(vid => {
-          // Only animate if not being dragged
-          if (!vid.classList.contains('dragging')) {
-            vid.style.transform = randomTransform();
-            vid.dataset.x = 0;
-            vid.dataset.y = 0;
-          }
-        });
+      // Default to random pattern
+      randomPattern();
+      // Optionally, animate overlays every few seconds for chaos (only in random mode)
+      let patternMode = 'random';
+      let interval = setInterval(() => {
+        if (patternMode === 'random') {
+          videos.forEach(vid => {
+            if (!vid.classList.contains('dragging')) {
+              vid.style.transform = randomTransform();
+              vid.dataset.x = 0;
+              vid.dataset.y = 0;
+            }
+          });
+        }
       }, 2000);
+      // Pattern controls
+      document.getElementById('pattern-controls').addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        patternMode = e.target.dataset.pattern;
+        if (patternMode === 'grid') gridPattern();
+        else if (patternMode === 'circle') circlePattern();
+        else if (patternMode === 'spiral') spiralPattern();
+        else if (patternMode === 'stack') stackPattern();
+        else randomPattern();
+      });
     });
   </script>
 </body>
