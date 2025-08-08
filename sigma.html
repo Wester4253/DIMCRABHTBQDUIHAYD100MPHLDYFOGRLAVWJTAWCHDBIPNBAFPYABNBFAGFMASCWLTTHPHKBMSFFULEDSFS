@@ -37,7 +37,8 @@
 </head>
 <body>
   <div id="video-container"></div>
-  <div id="pattern-controls" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;gap:0.5rem;">
+  <div id="pattern-controls" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;gap:0.5rem;align-items:center;">
+    <label style="color:#fff;font-size:1rem;">Videos: <input id="num-videos" type="number" min="1" max="32" value="8" style="width:3em;font-size:1rem;"></label>
     <button data-pattern="random">Random</button>
     <button data-pattern="grid">Grid</button>
     <button data-pattern="circle">Circle</button>
@@ -47,7 +48,7 @@
   <div id="start-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);color:#fff;display:flex;align-items:center;justify-content:center;z-index:1000;font-size:2rem;cursor:pointer;user-select:none;">Click to Start</div>
   <script>
   const VIDEO_SRC = './Untitled_video_-_Made_with_Clipchamp_2(1).mp4';
-    const NUM_VIDEOS = 8; // Number of overlays
+    let NUM_VIDEOS = 8; // Number of overlays
     const container = document.getElementById('video-container');
     let videos = [];
 
@@ -61,8 +62,8 @@
     }
 
     function gridPattern() {
-      const cols = Math.ceil(Math.sqrt(NUM_VIDEOS));
-      const rows = Math.ceil(NUM_VIDEOS / cols);
+      const cols = Math.ceil(Math.sqrt(videos.length));
+      const rows = Math.ceil(videos.length / cols);
       const w = window.innerWidth / cols;
       const h = window.innerHeight / rows;
       videos.forEach((vid, i) => {
@@ -83,7 +84,7 @@
       const cy = window.innerHeight / 2;
       const radius = Math.min(cx, cy) * 0.7;
       videos.forEach((vid, i) => {
-        const angle = (2 * Math.PI * i) / NUM_VIDEOS;
+        const angle = (2 * Math.PI * i) / videos.length;
         const x = cx + radius * Math.cos(angle) - window.innerWidth / 2;
         const y = cy + radius * Math.sin(angle) - window.innerHeight / 2;
         vid.style.transform = `translate(${x}px, ${y}px) scale(0.7) rotate(${angle * 180 / Math.PI}deg)`;
@@ -99,7 +100,7 @@
       const cy = window.innerHeight / 2;
       const maxRadius = Math.min(cx, cy) * 0.8;
       videos.forEach((vid, i) => {
-        const t = i / NUM_VIDEOS;
+        const t = i / videos.length;
         const angle = 4 * Math.PI * t;
         const radius = maxRadius * t;
         const x = cx + radius * Math.cos(angle) - window.innerWidth / 2;
@@ -183,10 +184,17 @@
     }
 
     // Prepare videos but don't play yet
-    createVideo(true);
-    for (let i = 1; i < NUM_VIDEOS; i++) {
-      createVideo(false);
+    function setupVideos(n) {
+      // Remove old videos
+      videos.forEach(v => v.remove());
+      videos = [];
+      NUM_VIDEOS = n;
+      createVideo(true);
+      for (let i = 1; i < NUM_VIDEOS; i++) {
+        createVideo(false);
+      }
     }
+    setupVideos(NUM_VIDEOS);
 
     document.getElementById('start-overlay').addEventListener('click', async function() {
       this.style.display = 'none';
@@ -215,8 +223,27 @@
       }, 2000);
       // Pattern controls
       document.getElementById('pattern-controls').addEventListener('click', e => {
+        if (e.target.tagName === 'INPUT') return;
         if (e.target.tagName !== 'BUTTON') return;
         patternMode = e.target.dataset.pattern;
+        if (patternMode === 'grid') gridPattern();
+        else if (patternMode === 'circle') circlePattern();
+        else if (patternMode === 'spiral') spiralPattern();
+        else if (patternMode === 'stack') stackPattern();
+        else randomPattern();
+      });
+      // Num videos input
+      document.getElementById('num-videos').addEventListener('change', async function() {
+        let n = parseInt(this.value);
+        if (isNaN(n) || n < 1) n = 1;
+        if (n > 32) n = 32;
+        this.value = n;
+        setupVideos(n);
+        // Play all new videos
+        for (const vid of videos) {
+          try { await vid.play(); } catch (e) {}
+        }
+        // Re-apply current pattern
         if (patternMode === 'grid') gridPattern();
         else if (patternMode === 'circle') circlePattern();
         else if (patternMode === 'spiral') spiralPattern();
