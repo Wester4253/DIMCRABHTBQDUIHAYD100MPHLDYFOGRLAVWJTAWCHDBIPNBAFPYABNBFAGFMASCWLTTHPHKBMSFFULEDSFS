@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Spam Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+    #video-container {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+    }
+    video {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      opacity: 0.25;
+      /* Each video will be slightly transparent */
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container"></div>
+  <script>
+    const VIDEO_SRC = './dimc.mp4';
+    const NUM_VIDEOS = 8; // Number of overlays
+    const container = document.getElementById('video-container');
+    let mainAudioVideo = null;
+
+    function createVideo(withAudio = false) {
+      const vid = document.createElement('video');
+      vid.src = VIDEO_SRC;
+      vid.autoplay = true;
+      vid.loop = true;
+      vid.muted = !withAudio;
+      vid.playsInline = true;
+      vid.style.opacity = withAudio ? 0.5 : 0.25;
+      vid.style.zIndex = withAudio ? 10 : 1;
+      container.appendChild(vid);
+      vid.addEventListener('ended', () => vid.play());
+      return vid;
+    }
+
+    // One video with audio, rest muted overlays
+    mainAudioVideo = createVideo(true);
+    for (let i = 1; i < NUM_VIDEOS; i++) {
+      createVideo(false);
+    }
+  </script>
+</body>
+</html>
